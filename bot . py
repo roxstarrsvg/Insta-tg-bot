@@ -1,0 +1,31 @@
+from aiogram import Bot, Dispatcher, types, executor
+import os
+import requests
+
+API_TOKEN = os.getenv("API_TOKEN")
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
+
+@dp.message_handler()
+async def download_instagram(message: types.Message):
+    url = message.text.strip()
+    if "instagram.com" not in url:
+        await message.reply("Valid Instagram URL bhejo.")
+        return
+
+    api = "https://saveinsta.app/api/ajaxSearch"
+    data = { "q": url, "lang": "en" }
+    headers = { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" }
+
+    try:
+        r = requests.post(api, data=data, headers=headers)
+        if r.status_code == 200 and r.json().get('url'):
+            media_url = r.json()['url'][0]['url']
+            await message.reply_video(media_url)
+        else:
+            await message.reply("Download nahi ho paya.")
+    except Exception as e:
+        await message.reply(f"Error: {str(e)}")
+
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
